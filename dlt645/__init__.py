@@ -452,3 +452,34 @@ def set_time(flo, r_flo=None) -> None:
 
     frame.data = datetime.now().strftime("%y%m%d%H%M%S")
     write_frame(flo, frame)
+
+def get_data(addr: str, di: str, flo, r_flo=None) -> str:
+    """Utility function to read data from a station.
+
+    A file-like object is required for the communication, if 'r_flo' is
+    ``None`` then 'flo' will be used for both read and write.
+
+    :param addr: a station address
+    :param di: data identification
+    :param flo: a file-like object instance for write
+    :param r_flo: a file-like object instance for read (defaults to flo)
+    :return: data payload from the station
+    """
+    if r_flo is None:
+        r_flo = flo
+
+    frame = Frame(addr)
+    frame.control = {
+        "direction": MAIN,
+        "response": RESPONSE_CORRECT,
+        "more": NO_MORE_DATA,
+        "function": FUNCTION_CODES[DLT645_2007]["READ_DATA"]
+    }
+    frame.data = di
+    write_frame(flo, frame)
+
+    resp = read_frame(iogen(r_flo))
+
+    if resp and resp.addr == addr and resp.data:
+        return resp.data
+    raise FrameFormatError("Invalid response from the station")
