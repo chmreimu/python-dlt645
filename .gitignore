@@ -2,3 +2,5 @@
 dist
 # sphinx
 docs/_build
+# tests
+tests

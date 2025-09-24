@@ -8,7 +8,7 @@ import sys
 
 import serial
 
-from . import get_active_energy, get_addr
+from . import get_active_energy, get_addr, set_addr
 
 
 def ser_args(parser):
@@ -135,3 +135,54 @@ def getaen():
 
     value = get_active_energy(addr, ser)
     sys.stdout.write(f"Active energy: {value} kWh\n")
+
+
+def setaddr():
+    """Entry point for CLI setting a station's address through serial port.
+
+    By default, use the USB port '``/dev/ttyUSB0``' and common serial
+    communication definition: 1200 baud, 8bits, parity even, 1 stop bit.
+
+    Usage:
+
+    .. code-block:: shell
+
+        $ dlt645_setaddr 112233445566 665544332211
+        Station address changed from 112233445566 to 665544332211
+    """
+    description = "Set station's DL/T645 address through serial port"
+    parser = argparse.ArgumentParser(description=description)
+    ser_args(parser)
+    parser.add_argument(
+        "old_address",
+        type=str,
+        help="Current station's address",
+    )
+    parser.add_argument(
+        "new_address",
+        type=str,
+        help="New address to set for the station",
+    )
+    args = parser.parse_args()
+
+    try:
+        ser = serial.Serial(
+            args.port,
+            baudrate=args.baudrate,
+            bytesize=args.bytesize,
+            parity=args.parity,
+            stopbits=args.stopbits,
+            timeout=args.timeout,
+            write_timeout=args.timeout,
+        )
+    except serial.serialutil.SerialException as e:
+        sys.stderr.write("{}\n".format(str(e)))
+        sys.exit(1)
+
+    try:
+        result = set_addr(args.old_address, args.new_address, ser)
+        sys.stdout.write(
+            f"Station address changed from {args.old_address} to {result}\n")
+    except Exception as e:
+        sys.stderr.write(f"Failed to set address: {str(e)}\n")
+        sys.exit(1)
