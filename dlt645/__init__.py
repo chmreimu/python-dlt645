@@ -33,6 +33,7 @@ Usage:
 """
 from .__meta__ import __version__  # noqa: F401
 from typing import Generator, Optional, Union, Dict, Any
+from datetime import datetime
 from .constants import (
     AWAKEN,
     BROADCAST_ADDR,
@@ -425,3 +426,29 @@ def get_active_energy(addr: str, flo, r_flo=None) -> float:
     if resp and resp.data and resp.data[-8:] == "00000000":
         return int(resp.data[:-8]) / 100
     return 0.0
+
+
+def set_time(flo, r_flo=None) -> None:
+    """Utility function to set the time of a station.
+
+    A file-like object is required for the communication, if 'r_flo' is
+    ``None`` then 'flo' will be used for both read and write.
+
+    :param flo: a file-like object instance for write
+    :param r_flo: a file-like object instance for read (defaults to flo)
+    """
+
+    if r_flo is None:
+        r_flo = flo
+
+    frame = Frame('999999999999')
+
+    frame.control = {
+        "direction": MAIN,
+        "response": RESPONSE_CORRECT,
+        "more": NO_MORE_DATA,
+        "function": FUNCTION_CODES[DLT645_2007]["BROADCAST_TIME"]
+    }
+
+    frame.data = datetime.now().strftime("%y%m%d%H%M%S")
+    write_frame(flo, frame)

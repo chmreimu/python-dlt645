@@ -8,7 +8,7 @@ import sys
 
 import serial
 
-from . import get_active_energy, get_addr, set_addr
+from . import get_active_energy, get_addr, set_addr, set_time
 
 
 def ser_args(parser):
@@ -185,4 +185,46 @@ def setaddr():
             f"Station address changed from {args.old_address} to {result}\n")
     except Exception as e:
         sys.stderr.write(f"Failed to set address: {str(e)}\n")
+        sys.exit(1)
+
+
+def settime():
+    """Entry point for CLI broadcasting current system time to all stations through serial port.
+
+    By default, use the USB port '``/dev/ttyUSB0``' and common serial
+    communication definition: 1200 baud, 8bits, parity even, 1 stop bit.
+    This command broadcasts the current system time to all stations using
+    the broadcast address '999999999999'.
+
+    Usage:
+
+    .. code-block:: shell
+
+        $ dlt645_settime
+        Time broadcast successfully sent to all stations
+    """
+    description = "Broadcast current system time to all stations through serial port"
+    parser = argparse.ArgumentParser(description=description)
+    ser_args(parser)
+    args = parser.parse_args()
+
+    try:
+        ser = serial.Serial(
+            args.port,
+            baudrate=args.baudrate,
+            bytesize=args.bytesize,
+            parity=args.parity,
+            stopbits=args.stopbits,
+            timeout=args.timeout,
+            write_timeout=args.timeout,
+        )
+    except serial.serialutil.SerialException as e:
+        sys.stderr.write(f"{str(e)}\n")
+        sys.exit(1)
+
+    try:
+        set_time(ser)
+        sys.stdout.write("Time broadcast successfully sent to all stations\n")
+    except Exception as e:
+        sys.stderr.write(f"Failed to broadcast time: {str(e)}\n")
         sys.exit(1)

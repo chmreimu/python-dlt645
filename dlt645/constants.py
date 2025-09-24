@@ -56,6 +56,7 @@ FUNCTION_CODES = {
         "READ_ADDR": 0b10011,
         "WRITE_DATA": 0b10100,
         "WRITE_ADDR": 0b10101,
+        "BROADCAST_TIME": 0b01000,
         "SET_SPEED": 0b10111,
         "SET_PWD": 0b11000,
         "RESET_PWR": 0b11010,
