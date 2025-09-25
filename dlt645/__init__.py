@@ -163,7 +163,7 @@ class Frame:
 
     def __str__(self) -> str:
         if self.frame is None:
-            return "Empty Frame"
+            return ""
         return bytetostr(self.frame)
 
     def load(self, framedata: Union[bytearray, bytes]) -> None:
@@ -187,7 +187,7 @@ class Frame:
 
         # Parse frame components
         self.addr = bytetostr(load_addr(self.frame[1:7]))
-        self.control = load_ctrl(self.frame[8])
+        self.control = load_ctrl([self.frame[8]])
         length = self.frame[9]
 
         # Validate length before slicing
@@ -482,4 +482,35 @@ def get_data(addr: str, di: str, flo, r_flo=None) -> str:
 
     if resp and resp.addr == addr and resp.data:
         return resp.data
+    raise FrameFormatError("Invalid response from the station")
+
+def set_data(addr: str, di: str, data: str, password: str, flo, r_flo=None) -> None:
+    """Utility function to write data to a station.
+
+    A file-like object is required for the communication, if 'r_flo' is
+    ``None`` then 'flo' will be used for both read and write.
+
+    :param addr: a station address
+    :param di: data identification
+    :param data: data payload to write
+    :param flo: a file-like object instance for write
+    :param r_flo: a file-like object instance for read (defaults to flo)
+    :raises FrameFormatError: if the response from the station is invalid
+    """
+    if r_flo is None:
+        r_flo = flo
+
+    frame = Frame(addr)
+    frame.control = {
+        "direction": MAIN,
+        "response": RESPONSE_CORRECT,
+        "more": NO_MORE_DATA,
+        "function": FUNCTION_CODES[DLT645_2007]["WRITE_DATA"]
+    }
+    frame.data = data + password + di
+    write_frame(flo, frame)
+
+    resp = read_frame(iogen(r_flo))
+    if resp and resp.addr == addr and resp.control["response"] == RESPONSE_CORRECT:
+        return
     raise FrameFormatError("Invalid response from the station")
