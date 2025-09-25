@@ -8,7 +8,7 @@ import sys
 
 import serial
 
-from . import get_active_energy, get_addr, set_addr, set_time, get_data
+from . import get_active_energy, get_addr, set_addr, set_time, get_data, set_data
 
 
 def ser_args(parser):
@@ -284,4 +284,71 @@ def getdata():
         sys.stdout.write(f"Data: {result}\n")
     except Exception as e:
         sys.stderr.write(f"Failed to read data: {str(e)}\n")
+        sys.exit(1)
+
+
+def setdata():
+    """Entry point for CLI writing specific data to a station through serial port.
+
+    By default, use the USB port '``/dev/ttyUSB0``' and common serial
+    communication definition: 1200 baud, 8bits, parity even, 1 stop bit.
+
+    Usage:
+
+    .. code-block:: shell
+
+        $ dlt645_setdata 00000000 12345678 0000000000000000
+        Data written successfully
+    """
+    description = "Write specific data to a station through serial port"
+    parser = argparse.ArgumentParser(description=description)
+    ser_args(parser)
+    parser.add_argument(
+        "-a",
+        "--address",
+        type=str,
+        help="Station's address",
+    )
+    parser.add_argument(
+        "data_id",
+        type=str,
+        help="Data identification code",
+    )
+    parser.add_argument(
+        "data",
+        type=str,
+        help="Data to write to the station",
+    )
+    parser.add_argument(
+        "password",
+        type=str,
+        help="Station's password",
+    )
+    args = parser.parse_args()
+
+    try:
+        ser = serial.Serial(
+            args.port,
+            baudrate=args.baudrate,
+            bytesize=args.bytesize,
+            parity=args.parity,
+            stopbits=args.stopbits,
+            timeout=args.timeout,
+            write_timeout=args.timeout,
+        )
+    except serial.serialutil.SerialException as e:
+        sys.stderr.write(f"{str(e)}\n")
+        sys.exit(1)
+
+    if args.address is None:
+        addr = get_addr(ser)
+        sys.stdout.write(f"Station address: {addr}\n")
+    else:
+        addr = args.address
+
+    try:
+        set_data(addr, args.data_id, args.data, args.password, ser)
+        sys.stdout.write("Data written successfully\n")
+    except Exception as e:
+        sys.stderr.write(f"Failed to write data: {str(e)}\n")
         sys.exit(1)

@@ -23,6 +23,7 @@ cli = ["pyserial"]
   dlt645_setaddr = { callable = "dlt645.cli:setaddr", extras = ["cli"] }
   dlt645_settime = { callable = "dlt645.cli:settime", extras = ["cli"] }
   dlt645_data = { callable = "dlt645.cli:getdata", extras = ["cli"] }
+  dlt645_setdata = { callable = "dlt645.cli:setdata", extras = ["cli"] }
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.10.0"
